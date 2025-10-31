@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: authwall-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: authwall
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: authwall
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authwall"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - authwall-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: authwall-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - authwall-network
+
+  authwall:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: authwall-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=authwall
+      - DB_PASSWORD=password
+      - DB_NAME=authwall
+      - DB_SSLMODE=disable
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=change-this-secret-in-production
+      - JWT_DURATION=1h
+      - MFA_ISSUER=AuthWall
+      - RATE_LIMIT_REQUESTS=100
+      - RATE_LIMIT_WINDOW=1m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - authwall-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: authwall-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - authwall-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: authwall-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - authwall-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  authwall-network:
+    driver: bridge
