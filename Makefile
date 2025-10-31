@@ -51,8 +51,8 @@ docker-up:
 	@echo "  AuthWall:   http://localhost:8080"
 	@echo "  Grafana:    http://localhost:3000 (admin/admin)"
 	@echo "  Prometheus: http://localhost:9090"
-	@echo "  PostgreSQL: localhost:5432"
-	@echo "  Redis:      localhost:6379"
+	@echo "  PostgreSQL: localhost:5433"
+	@echo "  Redis:      localhost:6380"
 
 docker-down:
 	@echo "Stopping services..."
