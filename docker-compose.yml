@@ -55,7 +55,7 @@ services:
       - DB_NAME=authwall
       - DB_SSLMODE=disable
       - REDIS_URL=redis://redis:6379/0
-      - JWT_SECRET=change-this-secret-in-production
+      - JWT_SECRET=6bb67f7523af3448efc53d358969905bbab62a74
       - JWT_DURATION=1h
       - MFA_ISSUER=AuthWall
       - RATE_LIMIT_REQUESTS=100

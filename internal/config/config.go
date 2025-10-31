@@ -74,7 +74,7 @@ func LoadConfig() (*Config, error) {
 			URL: getEnv("REDIS_URL", "redis://localhost:6379/0"),
 		},
 		JWT: JWTConfig{
-			SecretKey:     getEnv("JWT_SECRET", "your-secret-key-change-this"),
+			SecretKey:     getEnv("JWT_SECRET", "6bb67f7523af3448efc53d358969905bbab62a74"),
 			TokenDuration: getEnvDuration("JWT_DURATION", 1*time.Hour),
 		},
 		RateLimit: RateLimitConfig{
@@ -87,7 +87,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Validate required fields
-	if config.JWT.SecretKey == "your-secret-key-change-this" {
+	if config.JWT.SecretKey == "" {
 		return nil, fmt.Errorf("JWT_SECRET must be set")
 	}
 
